@@ -1,0 +1,278 @@
+##Préambule
+Au travers de cet article, je vais décrire comment j'ai installer ArchLinux sur ma machine perso. Tout ne doit pas être suivi scrupuleusement. J'essayerai de le préciser au fur et à mesure du tuto.
+
+il est nécessaire d'avoir un **accès internet** pour ce tuto
+
+## Téléchargement et création de la clé USB bootable
+###Le téléchargement
+Voila le lien qui permet de télécharger le dernier ISO en date de archlinux : http://mir.archlinux.fr/iso/latest/archlinux-2015.12.01-dual.iso
+
+Depuis une console linux :
+
+	wget http://mir.archlinux.fr/iso/latest/archlinux-2015.12.01-dual.iso
+
+###Cpoier l'image sur une clé USB
+Il n'est pas nécessaire d'avoir une clé USB de grande capacité, l'image est minuscule la partition qui est créé ne fait pas plus de 31Mo
+
+####Depuis linux
+Sous linux, il faut dans un premier temps trouver le périphérique sur lequel installer l'OS avec la commande suivante
+
+	fdisk -l
+Trouver son préiphérique en fonction des informations affichées puis lancer la commande suivante en l'adaptant
+***Attention à bien prendre la notation 'sdX' et non 'sdX1'***
+
+	dd if=/chemin/vers/archlinux-2012.11.01-dual.iso of=/dev/sdx bs=1M
+
+####Depuis Windows
+Il est possible d'utiliser Fedora Live USB Creator (Cet outil ne sert pas qu'à créer des images pour Fedora) pour copier l'image téléchargé sur la clé USB
+
+##L'installation
+Une fois l'installation sur la clef USB faite, il ne reste plus qu'à booter le PC depuis la clé USB.
+Choisir la première option (Boot Arch Linux)
+
+###Changer la langue de clavier
+Par défaut, le clavier est en QWERTY. Voilà la commande pour changer la langue du clavier en AZERTY 
+
+	loadkeys fr-pc
+
+###Connexion à Internet
+Si le PC est était câblé au démarrage, Internet doit déjà être disponible. Un petit ping permet de varifier l'accès à internet.
+
+	ping 8.8.8.8
+S'il n'y a pas internet, il est possible que l'interface ne soit pas activé. la commande suivante permet de s'en assurer
+
+	ip link
+	1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAUTLT group default
+		link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+	2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+		link/ether 08:00:27:23:1f:02 brd ff:ff:ff:ff:ff:ff
+*(l'exemple donné a été pris depuis une commande lancée sur une machine virtuel. le résultat est potentiellement différent directement sur un PC)*
+
+si l'interface (pour moi enp0s3) n'est pas en UP il faut l'activier avec la commande suivant *(adapter la ligne à votre interface)*
+
+	systemctl start dhcpcd@enp3s0
+
+Maintenant, le ping devrait fonctionner
+
+####Pour accèder au Wifi
+il est possible d'accéder à internet par le wifi. la commande suivante va lancer une recherche sur les accès wifi disponibles
+
+	wifi-menu
+
+
+##Partitionner le disque
+Maintenant que l'on sait que l'on va avoir accès à internet, on va pouvoir commencer l'installation de ArchLinux
+
+la première chose à faire est de regarder les différents disques disponibles afin de savoir sir quel disque installer Arch. Pour cela, la commande suivante permet d'afficher les différents disques.
+
+	fdisk -l
+
+Lors de l'installation sur une machine virtuelle il devrait y avoir que **sda**. lors de l'installation sur le pc directement il devrait y avoir en plus **sdb** qui représente la clé USB qui a permis de lancer le système.
+
+Pour être sur de travailler sur le bon disque, on va préciser celui-ci à la fin de la commande
+
+###Création des partitions
+	cfdisk /dev/sda
+	
+Pour l'installation avec une machine virtuelle, il est proposé de choisir un type de libellé. Dans mon cas, j'ai pros **dos**
+
+Il est possible de créer le partitionnement souhaité comme pour toutes les distribution linux. 
+Si le disque est déjà partitionné, il faut supprimer les partitions et repartir de rien. 
+
+>Pour ne pas avoir de problème lors de l'initialisation de la swap, je conseille de supprimer les partition et d'écrire les modification avec l'option **write**. Pour plus de précaution,  je prends même le temps de fermer l'outil et de le relancer avec la même commande.
+
+Le but de ce tuto n'est pas d'apprendre à savoir comment partitionner des disques, je vais donc rester simple et ne faire que 2 partitions une partition de swap et une partition système.
+
+ - Je commence par créer ma partition système (pourqu'elle soit en
+   **sda1**) avec l'option "**New**"
+ - Je la dimensionne à la taille de mon disque moins la taille de ma swap 
+ - Je choisis de créer une
+   partition primaire avec l'option "**primary**"
+ - La nouvelle ligne s'est
+   créée, je reste sur cette ligne et je choisis l'option "**Bootable**"
+
+Je recommence l'opération pour créer la swap
+
+ -Bouton "**New**"
+ - Je dimensionne sur l'espace qu'il me reste
+ - Choix "**primary**"
+ - Se déplacer le sur l'option "**Type**" et choisir le type 82 "82 Linux swap / Solaris"
+ 
+ Le disque est maintenant prêt à accueillir Arch il faut choisir l'option "**Write**" et "**Quit**"
+
+###Formater et monter les partitions
+Il faut maintenant formation les partitions pour qu'elles puissent supporter Arch. Je commence avec ma partition de données /dev/sda
+
+	mkfs.ext4 /dev/sda1
+Il faut maintenant monter la partition pour y accéder par la suite
+
+	mount /dev/sda1 /mnt
+
+Maintenant la swap
+
+	mkswap /dev/sda2
+
+Puis activer la swap avec la commande 
+
+	swapon /dev/sda2
+
+##Installation du système
+*(C'est à partir de ce moment que l'on va avoir besoin d'internet )*
+Je rappelle que notre partition est monté dans **/mnt**
+
+pacstrap est une commande qui permet d'installer les paquets directement sur le disque de notre future Archlinux. Il est nécessaire d'installer les paquet "**base**" et "**base-devel**" avec la commande suivante
+
+	pacstrap /mnt base base-devel
+
+Une seconde méthode consiste à prendre la main sur notre nouvelle distribution en utilisant `chroot` (change root - Changer la racine).
+Archlinux a un commande spécifique pour la première configuration
+
+	arch-chroot /mnt
+	pacman -S base base-devel
+
+Donc soit on utilise pacstrap soit on passe en mode chroot pour continuer la configuration. pacstrap ne sert qu'à installer des paquet, que chroot permet de prendre réellement la main et créer un utilisateur, changer l'heure du système ...
+
+##Configuration du système
+Une fois la base installée, il est possible de configurer notre distribution.
+Tout le reste de la configuration va se faire en chroot, il faut donc déjà avoir rentré la commande `arch-chroot /mnt`
+
+###Installer le gestionnaire de réseau Wifi 
+Une fois notre installation, la commande wifi-menu n'existera plus. On peut donc dors et déjà l'installer avec la commande suivante
+
+	pacman -S dialog wifi-menu wpa_supplicant
+
+###Changer le mot de passe root
+Il est important de changer le mot de passe de l'utilisateur root avec la commande suivante
+
+	passwd
+	Enter new UNIX password:
+	Retype new UNIX password:
+	passwd: password updated successfully
+
+###Configurer le clavier par défaut
+(l'éditeur de texte **nano** étant installé par défaut, c'est celui que l'on va utiliser pour la modifier les fichiers de configuration)
+
+	nano /etc/locale.gen
+Une fois le fichier ouvert, il faut décommenter la ligne suivante (en supprimant le caractère "**#**" au début de la ligne). Pour la france décommanter les lignes suivantes
+
+	fr_FR.UTF-8 UTF-8
+
+Enregistrer avec la combinaisons de touches `CTRL + o` puis quitter avec `CTRL + x`. Enfin exécuter les lignes suivantes
+
+	locale-gen
+	export LANG=fr_FR.UTF-8
+	localectl set-locale LANG=fr_FR.UTF-8
+	echo KEYMAP=fr >> /etc/vconsole.conf
+
+###Créer un utilisateur autre que root
+
+	useradd -G users,wheel -m -s /bin/bash monuser
+
+	useradd -G users,wheel -m -s /bin/bash schubby
+
+Il me reste à définir un mot de passe pour mon utilisateur
+
+	passwd schubby
+
+###Mettre l'utilisateur en sudoer
+
+La notion de "sudoer" n'existe pas encore, il faut donc l'installer
+
+	pacman -S sudo
+
+Vu que nous avons mis notre utilisateur dans le groupe wheel, il suffit de décommenter la ligne suivante pour qu'il soit sudoer `#%wheel ALL=(ALL)ALL`
+
+dans le fichier sudoers avec ka commande suivante
+
+	nano /etc/sudoers
+
+
+###Changer la localisation par défaut
+Pour changer l'heure automatique, il faut utiliser la 
+
+	ln -s /usr/share/zoneinfo/Europe/Paris /etc/localtime
+
+Installer ntp pour mettre à jour la date et l'heure de façon autoimatique
+
+	pacman -S ntp
+
+lancer le service au démarrage
+
+	systemctl enable ntpd
+
+lancer le service 
+
+	systemctl start ntpd
+
+###Installer un programme d'amorçage (boot loader)
+J'ai choisi grub qui est le boot leader le plus connu. Mais il est tout a fait possible d'installaer syslinux à la place
+
+	pacman -S grub-bios
+
+Choisir ensuite sur quelle disque installer grub le **x** de **sdx** représentant la lettre associée au disque (dans mon cas **sda**)
+
+	grub-install /dev/sdx
+
+Il reste maintenant à générer un fichier d'initialisation de grub
+
+	mkinitcpio -p linux
+	grub-mkconfig -o /boot/grub/grub.cfg
+
+### Générer la table de partition
+il faut maintenant générer la table de partition. pour générer la table de partition il faut sortir du mode chroot avec la commande 
+
+	exit
+
+On revient alors dans le l'image de Archlinux. Il faut maintenant générer la table de partition
+
+	genfstab /mnt >> /mnt/etc/fstab
+
+##Démonter les partition et redémarrer
+nous pouvons maintenant démonter toutes les partitions et redémarrer la machine
+
+	umount /mnt
+	systemctl reboot
+
+##Premier lancement
+###Changer le hostname
+
+		hostnamectl set-hostname nouveauhostname
+
+###activer le DHCP 
+Déterminer quelle interface activer au démarrage
+
+	ip link
+(Dans mon cas je veux choisir enp0s3
+
+	systemtcl enable dhcpcd@enp0s3.service
+	systemctl start dhcpcd@enp0s3.service
+
+
+###Installation de Yaourt
+Yaourt est uyn dépot basé sur la communauté de Archlinux qui permet l'accès à de nombreux paquets
+
+	nano /etc/pacman.conf
+
+décommenter la ligne `Include = /etc/pacman.d/mirrorlist` juste en dessous de la ligne`#[Multilib]`
+
+puis ajouter les lignes suivantes
+
+	[archlinuxfr]
+	SigLevel = Never
+	Server = http://repo.archlinux.fr/$arch
+
+Installer enfin yaourt
+
+	pacman -Sy yaourt
+
+*(Attention à la syntaxe, le y est en minuscule)*
+
+
+#Queslques exemples de liens qui m'ont aidés
+
+1. https://www.youtube.com/watch?v=Wqh9AQt3nho
+2. https://www.youtube.com/watch?v=kQFzVG4wZEg
+3. https://www.youtube.com/watch?v=Fqu6V5pqeTk
+
+
+> Written with [StackEdit](https://stackedit.io/).
