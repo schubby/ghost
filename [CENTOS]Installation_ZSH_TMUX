@@ -1,0 +1,60 @@
+Cet article permet d'installer un environnement sexy et efficace au travers d'un Shell ZSH agrémenté de Oh-my-zsh. Le tout accompagné de Tmux qui est un multiplexeur libre en mode texte facilement paramétrable.
+
+#Présentation des modules
+###ZSH
+Zsh est un shell Unix comme bash ou sh? Dans les fonctions principales (les plus intéressantes) on peut noter :
+la complétion des commandes
+la complétion des répertoires avec <TAB>
+la correction "orthographique" des commandes
+
+En plus de fonctions aussi basiques que pratiques, ZSH possède d'autres possibilités d'exploitation au travers de "oh-my-zsh" qui est un projet open source mettant à disposition une grande liste de plugins, thèmes : 
+https://github.com/robbyrussell/oh-my-zsh/tree/master/plugins
+
+###Tmux
+Tmux est un multiplexeur de terminaux. L'intérêt est donc de "splittter" la fenêtre de la console afin d'afficher un ou plusieurs autres terminaux.
+
+#Installation et configuration
+###Installation de ZSH et Oh-My-Zsh
+il faut tout d'abord installer zsh
+
+    sudo yum install zsh
+
+Ensuite il installer "oh my Zsh"
+
+- Soit en utilisant Curl
+
+		sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+		
+- Soit en utilisant wget
+
+		sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+
+###Paramétrage de Oh-My-Zsh
+####les thèmes
+Il est possible de choisir son thème dans la liste suivante :  https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
+Une fois choisi, il faut modifier le fichier .zshrc de l'utilisateur et changer la ligne ZSH_THEME="..." avec le nom du thème souhaité entre quotes.
+
+#####Thème agnoster
+J'aime beaucoup ce thème, mais il nécessite un peu de paramétrage que nous allons voir. J'ai donc modifié la ligne en ajoutant le nom du thème ZSH_THEME="agnoster" comme indiqué dans le point précédent.
+
+Ce thème fonctionne avec powerline. Powerline est un plugin pour vim ainsi qu'un prompt plugin (pour bash, zsh, ...)
+
+- Commande pour Centos
+		
+		yum install powerline
+
+- Commande pour Fedora 22
+
+		dnf install powerline
+
+####Les plugins
+Il existe une liste de plugins sur ce que peut faire Oh-My-Zsh à l'adresse suivante : https://github.com/robbyrussell/oh-my-zsh/wiki/Plugins
+Pour activer ces plugins, il suffit d'ajouter leur nom dans le fichier .zshrc. la ligne doit être dé-commenté (ligne 52) et ressembler à quelque chose du genre :
+
+	plugins(git,docker,common-aliases).
+
+####Changer le thème dans putty
+Il est possible de changer les couleurs pour qu'elles soient plus sympa sur putty
+ouvrir regedit 
+
+créer son propre thème http://ciembor.github.io/4bit/#
