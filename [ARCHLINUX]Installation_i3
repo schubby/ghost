@@ -1,0 +1,69 @@
+
+#Préambule 
+i3 est ce que l'on appelle un tilling windows manager. Il permet de gérer toutes les application au travers de consoles
+
+2 choses nécessaire pour installer i3 :
+ - Xorg
+ - Donc forcément des pilotes graphiques
+
+#Installation de Xorg
+Il est possible d'installer Xorg simplement au travers des commandes suivantes
+
+	pacman -Syu xorg-server xorg-xinit xorg-server-utils
+
+##Test de l'installation
+Pour tester l'installation nous allons installer xterm (qui de toute façon nous servira pour i3). Ensuite, nous allons configurer un fichier pour ne lancer X que pour 10secondes (ainsi en cas d'erreur on reviens sur notre console)
+
+	pacman -S xterm
+	echo "xterm & sleep 10" > ~/.xinitrc
+	startx
+
+##Configuration du clavier
+Pour paramétrer le clavier, il faut créer un fichier avec la commande `nano /etc/X11/xorg.conf.d/10-keyboard-layout.conf` puis le compléter avec les les lignes suivantes
+
+	Section "InputClass"
+	    Identifier         "Keyboard Layout"
+	    MatchIsKeyboard    "yes"
+	    Option             "XkbLayout"  "fr"
+	    Option             "XkbVariant" "latin9" 
+	EndSection
+
+##Configurer la langue
+De la même façon que la langue a été configurée dans l'installation de ArchLinux, il faut passer les commandes suivantes pour que la session garde la langue compte
+
+	export LANG=fr_FR.UTF-8
+	localectl set-locale LANG=fr_FR.UTF-8
+
+##Configuration du touchpad
+Dans beaucoup de cas, les drivers synaptics vont permettre d'installer le touchpad 
+
+	yaourt -S 	xf86-input-synaptics
+
+#Installation de i3
+Si yaourt est déjà installé comme vu dans le tuto d'installation de archlinux, il n'y a rien de plus simple, 
+
+	yaourt -S i3
+
+Il faut mantenant lancer i3 au démarrage de X
+
+	echo "exec i3" >> ~/.xinitrc
+
+##Premier lancement
+Lors du premier lancement de i3 avec la commande `startx` 2 questions sont posées, la première permet de choisir la touche MOD qui va permettre les raccourcis claviers *'par défaut la touche Windows)* et la seconde de créer un fichier de configuration i3. J'ai laissé les valeurs par défaut.
+
+#Configuration de i3
+
+Je ne vais pas réécrire tout ce qui a été très bien expliqué dans les vidéos suivantes, je vais me contenter d'apporter quelques précision qui m'ont servies
+
+###Vidéo 1
+https://www.youtube.com/watch?v=j1I63wGcvU4&list=PL5ze0DjYv5DbCv9vNEzFmP6sU7ZmkGzcf&index=1
+
+###Vidéo 2
+https://www.youtube.com/watch?v=8-S0cWnLBKg&list=PL5ze0DjYv5DbCv9vNEzFmP6sU7ZmkGzcf&index=2
+
+Dans cette vidéo, il est question de la commande xprop. Pour l'insatller, il faudra passer par la commande suivante
+	
+	yaourt -S xorg-xprop
+
+###Vidéo 3
+https://www.youtube.com/watch?v=ARKIwOlazKI&list=PL5ze0DjYv5DbCv9vNEzFmP6sU7ZmkGzcf&index=3
