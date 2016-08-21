@@ -1,0 +1,11 @@
+Mon premier billet va décrire l'installation de Docker sur un serveur Fedora 24
+
+##Installation de Docker
+installation du paquet docker
+<code>dnf -y install docker</code>
+
+Lancement de Docker
+<code>systelctl start docker</code>
+
+lancement de Docker au démarrage du serveur
+<code>systemctl enable docker</code> 
